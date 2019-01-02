@@ -7,3 +7,7 @@
 .venv/
 .vscode/
 .idea/
+
+
+# Do not track local environment logs.
+*.log
