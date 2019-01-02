@@ -1,10 +1,22 @@
+"""
+Class to extend functionality of Python's ldap3 module.
+"""
 
-import ldap3
-import sys
+# System Imports.
+import ldap3, sys
+
+# User Class Imports.
+from resources import logging
+
+
+# Initialize logging.
+logger = logging.get_logger(__name__)
 
 
 class SimpleLdapLib(object):
-
+    """
+    Extends ldap3 module to have server binding and authentication methods.
+    """
     def __init__(self):
         self._ldap_connection = None
 
@@ -34,13 +46,13 @@ class SimpleLdapLib(object):
                                                      raise_exceptions=True)
             self._ldap_connection.bind()
         except ldap3.core.exceptions.LDAPSocketOpenError as e:
-            print("Failed to connect to ldap server.")
+            logger.error("Failed to connect to ldap server.")
             return False
         except ldap3.core.exceptions.LDAPSocketReceiveError as e:
-            print("Connection to ldap server timed out.")
+            logger.error("Connection to ldap server timed out.")
             return False
         except:
-            print(str(sys.exc_info()))
+            logger.error(str(sys.exc_info()))
             return False
         return True
 
@@ -52,7 +64,7 @@ class SimpleLdapLib(object):
         :param search_filter: The LDAP filter to use when searching
         :param attributes: A list of attributes to return
         :param timeout: Number of seconds to wait before timing out the connection
-        :return: None - Nothing found | Response - The response for then ldap server
+        :return: None - Nothing found | Response - The response from the ldap server
         """
         try:
             self._ldap_connection.search(search_base=dn,
@@ -62,14 +74,14 @@ class SimpleLdapLib(object):
                                          attributes=attributes,
                                          time_limit=timeout)
         except ldap3.core.exceptions.LDAPAdminLimitExceededResult:
-            print(self._ldap_connection.response)
+            logger.error(self._ldap_connection.response)
         except:
-            print(sys.exc_info())
+            logger.error(sys.exc_info())
             return None
 
-        # user not found
+        # User not found
         if not self._ldap_connection.response:
-            print("No users found.")
+            logger.error("No users found.")
             return None
 
         # print(self._ldap_connection.response[0])
