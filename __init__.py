@@ -88,4 +88,37 @@ class SimpleLdapLib(object):
 
         return self._ldap_connection.response
 
-    # def authenticate(self, dn, password, timeout=30):
+    def authenticate(self, host, dn, password, timeout=30):
+        """
+        Authenticate a user with an ldap server and then unbind the server.
+        :param host: Ldap Server Address
+        :param dn: Full DN of the user
+        :param password: User's Password
+        :param timeout: Number of seconds to wait before timing out the connection
+        :return: None | Error Message
+        """
+        login_status = None
+        try:
+            server = ldap3.Server(host=host,
+                                  connect_timeout=timeout)
+            self._ldap_connection = ldap3.Connection(server=server,
+                                                     authentication=ldap3.SIMPLE,
+                                                     user=dn,
+                                                     password=password,
+                                                     raise_exceptions=True)
+            self._ldap_connection.bind()
+            self._ldap_connection.unbind()
+        except ldap3.core.exceptions.LDAPSocketOpenError as e:
+            login_status = "Failed to connect to ldap server."
+
+        except ldap3.core.exceptions.LDAPSocketReceiveError as e:
+            login_status = "Connection to ldap server timed out."
+
+        except ldap3.core.exceptions.LDAPInvalidCredentialsResult as e:
+            login_status = "Username or Password is incorrect."
+
+        except:
+            login_status = "An unknown error occurred, please see the log for more details."
+            print(str(sys.exc_info()))
+
+        return login_status
