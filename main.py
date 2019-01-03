@@ -8,12 +8,12 @@ Library itself is located in "simple_ldap_lib.py" and "resources/config.py".
 from getpass import getpass
 
 # User Class Imports.
+import resources.logging
 import simple_ldap_lib
-from resources import logging
 
 
 # Initialize logging.
-logger = logging.get_logger(__name__)
+logger = resources.logging.get_logger(__name__)
 
 
 if __name__ == "__main__":
