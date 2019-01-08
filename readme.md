@@ -15,6 +15,7 @@ For more complicated setups (such as where there are multiple LDAP servers/searc
 method args can be set on function call instead of within the config.
 
 ### Arg Explanations for those unfamiliar with LDAP
+* **Host** - The IP address or domain of server to connect to. Should begin with ``ldaps://``.
 * **DN** - For bind and authenticate methods, the "dn" can be thought of as "the full, unique directory path within LDAP
 to the login user".
     * Ex: we want to log in with user having a cn of "Bob". The DN might be something like `"cn=Bob,dc=users,dc=myLdap"`.

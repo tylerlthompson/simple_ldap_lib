@@ -25,7 +25,7 @@ class SimpleLdap(object):
         self.unbind_server()
 
     def bind_server(self, host=config['host'], dn=config['dn'], password=config['password'],
-                    timeout=config['connection_timeout']):
+                    timeout=int(config['connection_timeout'])):
         """
         Binds the class to an ldap server with specified credentials.
         :param host: LDAP server address.
@@ -36,11 +36,11 @@ class SimpleLdap(object):
         """
         logger.debug('Attempting server bind.')
         try:
-            # server = ldap3.Server(host=host, connect_timeout=timeout)
-            # logger.info('Server: {0}'.format(server))
+            server = ldap3.Server(host=host, connect_timeout=timeout)
+            logger.debug('Server: {0}'.format(server))
             # NOTE: Connection errors out when using Server object. Only seems to work with direct host value.
             self._ldap_connection = ldap3.Connection(
-                server=host,
+                server=server,
                 authentication=ldap3.SIMPLE,
                 user=dn,
                 password=password,
@@ -74,7 +74,7 @@ class SimpleLdap(object):
             pass
 
     def search(self, search_base=config['search_base'], search_filter=config['search_filter'],
-               attributes=config['attributes'], timeout=config['search_timeout']):
+               attributes=config['attributes'], timeout=int(config['search_timeout'])):
         """
         Searches for the users in the ldap server based on a filter and return specified attributes.
         Assumes ldap connection is already made.
@@ -107,7 +107,7 @@ class SimpleLdap(object):
         return self._ldap_connection.response[0]['attributes']
 
     def authenticate(self, host=config['host'], dn=config['dn'], password=config['password'],
-                    timeout=config['connection_timeout']):
+                    timeout=int(config['connection_timeout'])):
         """
         Authenticates a user with an ldap server.
         Accomplishes this by binding to prove user exists, then immediately unbinding.
@@ -121,11 +121,11 @@ class SimpleLdap(object):
         login_status = 'Authentication success.'
         login_success = False
         try:
-            # server = ldap3.Server(host=host, connect_timeout=timeout)
-            # logger.info('Server: {0}'.format(server))
+            server = ldap3.Server(host=host, connect_timeout=timeout)
+            logger.debug('Server: {0}'.format(server))
             # NOTE: Connection errors out when using Server object. Only seems to work with direct host value.
             self._ldap_connection = ldap3.Connection(
-                server=host,
+                server=server,
                 authentication=ldap3.SIMPLE,
                 user=dn,
                 password=password,
