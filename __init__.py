@@ -152,7 +152,7 @@ class SimpleLdap(object):
             attributes = config['attributes']
         if timeout is None:
             timeout = int(config['search_timeout'])
-            
+
         if search_scope == "LEVEL":
             search_scope = ldap3.LEVEL
         elif search_scope == "BASE":
@@ -270,13 +270,11 @@ class SimpleLdap(object):
                 return None
             else:
                 search_base = config['search_base']
-        logger.info('Search Base: {0}'.format(search_base))
         if search_filter is None:
             if config['search_filter'] is '':
                 search_filter = '(uid={0})'.format(uid)
             else:
                 search_filter = config['search_filter']
-        logger.info('Search filter: {0}'.format(search_filter))
         if conn_timeout is None:
             conn_timeout = int(config['connection_timeout'])
         if search_timeout is None:
