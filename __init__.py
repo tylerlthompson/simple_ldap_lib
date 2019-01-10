@@ -24,8 +24,43 @@ class SimpleLdap(object):
     def __del__(self):
         self.unbind_server()
 
-    def bind_server(self, host=config['host'], dn=config['master_dn'], password=config['master_password'],
-                    timeout=int(config['connection_timeout'])):
+    def set_host(self, host):
+        """
+        Sets config host value.
+        :param host: Desired host.
+        """
+        if re.match('ldaps://', host):
+            config['host'] = host
+        else:
+            config['host'] += host
+        logger.debug('Host value set to {0}'.format(config['host']))
+
+    def set_master_account(self, master_dn, master_password, check_credentials=True):
+        """
+        Checks that dn and pass authenticates properly. If so, sets config master account values.
+        :param master_dn: Dn of master account.
+        :param master_password: Password of master account.
+        :param check_credentials: Bool if credentials should be validated. Defaults to true.
+        :return: Boolean indicating if config values were set.
+        """
+        if check_credentials:
+            # Checking credentials. Slower but ensures master account is valid for given LDAP.
+            auth_result = self.authenticate(dn=master_dn, password=master_password)
+            if auth_result[0]:
+                # Authenticated properly.
+                config['master_dn'] = master_dn
+                config['master_password'] = master_password
+                return True
+            else:
+                # Failed to auth. Logs should show error.
+                return False
+        else:
+            # Skipping credential check. Initializes library faster but is less safe.
+            config['master_dn'] = master_dn
+            config['master_password'] = master_password
+            return True
+
+    def bind_server(self, host=None, dn=None, password=None, timeout=None):
         """
         Binds the class to an ldap server with specified credentials.
         :param host: LDAP server address.
@@ -35,6 +70,17 @@ class SimpleLdap(object):
         :return: True | False
         """
         logger.debug('Attempting server bind.')
+
+        # Define kwarg values.
+        if host is None:
+            host = config['host']
+        if dn is None:
+            dn = config['master_dn']
+        if password is None:
+            password = config['master_password']
+        if timeout is None:
+            timeout = int(config['connection_timeout'])
+
         try:
             server = ldap3.Server(host=host, connect_timeout=timeout)
             logger.debug('Server: {0}'.format(server))
@@ -75,8 +121,7 @@ class SimpleLdap(object):
         except AttributeError:
             pass
 
-    def search(self, search_base=config['search_base'], search_filter=config['search_filter'],
-               attributes=config['attributes'], timeout=int(config['search_timeout'])):
+    def search(self, search_base=None, search_filter=None, attributes=None, timeout=None):
         """
         Searches for the users in the ldap server based on a filter and return specified attributes.
         Assumes ldap connection is already made.
@@ -86,6 +131,26 @@ class SimpleLdap(object):
         :param timeout: Number of seconds to wait before timing out the search.
         :return: None - Nothing found | Response - The response from the ldap server
         """
+        logger.debug('Attempting server search.')
+
+        # Define kwarg values.
+        if search_base is None:
+            if config['search_base'] is '':
+                logger.error('No search base set. Cancelling search.')
+                return None
+            else:
+                search_base = config['search_base']
+        if search_filter is None:
+            if config['search_filter'] is '':
+                logger.error('No search filter set. Cancelling search.')
+                return None
+            else:
+                search_filter = config['search_filter']
+        if attributes is None:
+            attributes = config['attributes']
+        if timeout is None:
+            timeout = int(config['search_timeout'])
+
         try:
             self._ldap_connection.search(
                 search_base=search_base,
@@ -108,8 +173,7 @@ class SimpleLdap(object):
 
         return self._ldap_connection.response[0]['attributes']
 
-    def authenticate(self, host=config['host'], dn=config['master_dn'], password=config['master_password'],
-                     timeout=int(config['connection_timeout'])):
+    def authenticate(self, host=None, dn=None, password=None, timeout=None):
         """
         Authenticates a user with an ldap server.
         Accomplishes this by binding to prove user exists, then immediately unbinding.
@@ -120,6 +184,17 @@ class SimpleLdap(object):
         :return: Array - [Boolean - Authentication success, String - status_message]
         """
         logger.debug('Attempting user authentication.')
+
+        # Define kwarg values.
+        if host is None:
+            host = config['host']
+        if dn is None:
+            dn = config['master_dn']
+        if password is None:
+            password = config['master_password']
+        if timeout is None:
+            timeout = int(config['connection_timeout'])
+
         login_status = 'Authentication success.'
         login_success = False
         try:
@@ -142,10 +217,10 @@ class SimpleLdap(object):
 
         except ldap3.core.exceptions.LDAPSocketOpenError as e:
             login_status = 'Failed to connect to ldap server.'
-            logger.error('{0}\n{1}'.format(login_status, e), exec_info=True)
+            logger.error(e, exc_info=True)
         except ldap3.core.exceptions.LDAPSocketReceiveError as e:
             login_status = 'Connection to ldap server timed out.'
-            logger.error('{0}\n{1}'.format(login_status, e), exec_info=True)
+            logger.error('{0}\n{1}'.format(login_status, e), exc_info=True)
         except ldap3.core.exceptions.LDAPInvalidCredentialsResult:
             login_status = 'Username or Password is incorrect.'
             logger.warning(login_status)
@@ -155,10 +230,8 @@ class SimpleLdap(object):
 
         return [login_success, login_status]
 
-    def authenticate_with_uid(self, uid, pw, host=config['host'], dn=config['master_dn'],
-                    password=config['master_password'], search_base=config['search_base'],
-                    search_filter=config['search_filter'], conn_timeout=int(config['connection_timeout']),
-                    search_timeout=int(config['search_timeout'])):
+    def authenticate_with_uid(self, uid, pw, host=None, dn=None, password=None, search_base=None, search_filter=None,
+                    conn_timeout=None, search_timeout=None):
         """
         First logs into server with known user. Then attempts to find user with given uid.
         On success, reads user values, disconnects and attempts authenticate function with user's full dn.
@@ -173,6 +246,33 @@ class SimpleLdap(object):
         :param search_timeout: Number of seconds to wait before timing out the search.
         :return: Array - [Boolean - Authentication success, String - status_message]
         """
+        logger.debug('Attempting user authentication with specified UID.')
+
+        # Define kwarg values.
+        if host is None:
+            host = config['host']
+        if dn is None:
+            dn = config['master_dn']
+        if password is None:
+            password = config['master_password']
+        if search_base is None:
+            if config['search_base'] is '':
+                logger.error('No search base set. Cancelling search.')
+                return None
+            else:
+                search_base = config['search_base']
+        logger.info('Search Base: {0}'.format(search_base))
+        if search_filter is None:
+            if config['search_filter'] is '':
+                search_filter = '(uid={0})'.format(uid)
+            else:
+                search_filter = config['search_filter']
+        logger.info('Search filter: {0}'.format(search_filter))
+        if conn_timeout is None:
+            conn_timeout = int(config['connection_timeout'])
+        if search_timeout is None:
+            search_timeout = int(config['search_timeout'])
+
         # Bind to server with known account.
         connection = self.bind_server(host, dn, password, conn_timeout)
         if connection:
