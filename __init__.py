@@ -121,7 +121,8 @@ class SimpleLdap(object):
         except AttributeError:
             pass
 
-    def search(self, search_base=None, search_filter=None, attributes=None, timeout=None):
+
+    def search(self, search_base=None, search_filter=None, attributes=None, timeout=None, search_scope='LEVEL'):
         """
         Searches for the users in the ldap server based on a filter and return specified attributes.
         Assumes ldap connection is already made.
@@ -129,6 +130,7 @@ class SimpleLdap(object):
         :param search_filter: The LDAP filter to use when searching.
         :param attributes: A list of attributes to return.
         :param timeout: Number of seconds to wait before timing out the search.
+        :param search_scope: The scope in which to search in.
         :return: None - Nothing found | Response - The response from the ldap server
         """
         logger.debug('Attempting server search.')
@@ -150,12 +152,19 @@ class SimpleLdap(object):
             attributes = config['attributes']
         if timeout is None:
             timeout = int(config['search_timeout'])
+            
+        if search_scope == "LEVEL":
+            search_scope = ldap3.LEVEL
+        elif search_scope == "BASE":
+            search_scope = ldap3.BASE
+        else:
+            search_scope = ldap3.SUBTREE
 
         try:
             self._ldap_connection.search(
                 search_base=search_base,
                 search_filter=search_filter,
-                search_scope=ldap3.LEVEL,
+                search_scope=search_scope,
                 paged_size=1,
                 attributes=attributes,
                 time_limit=timeout,
