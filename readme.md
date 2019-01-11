@@ -5,7 +5,8 @@
 A project to extend functionality of Python's ldap3 module.
 
 ## Installation
-`pip3 install ldap3`
+This can be imported into another project with the command
+``git submodule add https://git.ceas.wmich.edu/Python/SimpleLdapLib.git``
 
 ## Usage
 By default, all methods will try to read from the config.<br>
