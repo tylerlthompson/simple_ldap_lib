@@ -1,1 +1,5 @@
-ldap3
+
+# Run via "pip install -r requirements.txt" while in the base project directory.
+
+ldap3           # Python 3 LDAP library.
+coverage        # Python testing code coverage library.
