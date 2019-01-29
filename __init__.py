@@ -61,6 +61,14 @@ class SimpleLdap(object):
             self.config['master_password'] = master_password
             return True
 
+    def set_search_base(self, search_base):
+        """
+        Sets search base.
+        In method format so user does not have to access library config for basic functionality.
+        :param search_base: The base DN to search.
+        """
+        self.config['search_base'] = search_base
+
     def bind_server(self, host=None, dn=None, password=None, timeout=None):
         """
         Binds the class to an ldap server with specified credentials.
