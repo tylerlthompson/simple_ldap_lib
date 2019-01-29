@@ -61,13 +61,15 @@ class SimpleLdap(object):
             self.config['master_password'] = master_password
             return True
 
-    def set_search_base(self, search_base):
+    def set_search_params(self, search_base, search_filter='uid'):
         """
         Sets search base.
         In method format so user does not have to access library config for basic functionality.
         :param search_base: The base DN to search.
+        :param search_filter: The LDAP filter to use when searching. Defaults to uid.
         """
         self.config['search_base'] = search_base
+        self.config['search_filter'] = search_filter
 
     def bind_server(self, host=None, dn=None, password=None, timeout=None):
         """
