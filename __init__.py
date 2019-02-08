@@ -241,15 +241,19 @@ class SimpleLdap(object):
         except ldap3.core.exceptions.LDAPSocketOpenError as e:
             login_status = 'Failed to connect to ldap server.'
             logger.error(e, exc_info=True)
+            self.unbind_server()
         except ldap3.core.exceptions.LDAPSocketReceiveError as e:
             login_status = 'Connection to ldap server timed out.'
             logger.error('{0}\n{1}'.format(login_status, e), exc_info=True)
+            self.unbind_server()
         except ldap3.core.exceptions.LDAPInvalidCredentialsResult:
             login_status = 'Username or Password is incorrect.'
             logger.warning(login_status)
+            self.unbind_server()
         except Exception as e:
             login_status = 'An unknown error occurred, please see the log for more details.'
             logger.error(e, exc_info=True)
+            self.unbind_server()
 
         return [login_success, login_status]
 
