@@ -36,7 +36,7 @@ class SimpleLdap(object):
             self.config['host'] += host
         logger.debug('Host value set to {0}'.format(self.config['host']))
 
-    def set_master_account(self, master_dn, master_password, check_credentials=True):
+    def set_master_account(self, master_dn, master_password, check_credentials=True, get_info='SCHEMA'):
         """
         Checks that dn and pass authenticates properly. If so, sets config master account values.
         :param master_dn: Dn of master account.
@@ -46,7 +46,7 @@ class SimpleLdap(object):
         """
         if check_credentials:
             # Checking credentials. Slower but ensures master account is valid for given LDAP.
-            auth_result = self.authenticate(dn=master_dn, password=master_password)
+            auth_result = self.authenticate(dn=master_dn, password=master_password, get_info=get_info)
             if auth_result[0]:
                 # Authenticated properly.
                 self.config['master_dn'] = master_dn
@@ -69,7 +69,7 @@ class SimpleLdap(object):
         """
         self.config['search_base'] = search_base
 
-    def bind_server(self, host=None, dn=None, password=None, timeout=None):
+    def bind_server(self, host=None, dn=None, password=None, timeout=None, get_info='SCHEMA'):
         """
         Binds the class to an ldap server with specified credentials.
         :param host: LDAP server address.
@@ -91,7 +91,7 @@ class SimpleLdap(object):
             timeout = int(self.config['connection_timeout'])
 
         try:
-            server = ldap3.Server(host=host, connect_timeout=timeout)
+            server = ldap3.Server(host=host, connect_timeout=timeout, get_info=get_info)
             logger.debug('Server: {0}'.format(server))
 
             self._ldap_connection = ldap3.Connection(
@@ -196,7 +196,7 @@ class SimpleLdap(object):
 
         return self._ldap_connection.response[0]['attributes']
 
-    def authenticate(self, host=None, dn=None, password=None, timeout=None):
+    def authenticate(self, host=None, dn=None, password=None, timeout=None, get_info='SCHEMA'):
         """
         Authenticates a user with an ldap server.
         Accomplishes this by binding to prove user exists, then immediately unbinding.
@@ -221,7 +221,7 @@ class SimpleLdap(object):
         login_status = 'Authentication success.'
         login_success = False
         try:
-            server = ldap3.Server(host=host, connect_timeout=timeout)
+            server = ldap3.Server(host=host, connect_timeout=timeout, get_info=get_info)
             logger.debug('Server: {0}'.format(server))
 
             self._ldap_connection = ldap3.Connection(
@@ -258,7 +258,7 @@ class SimpleLdap(object):
         return [login_success, login_status]
 
     def authenticate_with_uid(self, uid, pw, host=None, dn=None, password=None, search_base=None, search_filter=None,
-                    conn_timeout=None, search_timeout=None):
+                    conn_timeout=None, search_timeout=None, get_info='SCHEMA', is_cae_ldap=True):
         """
         First logs into server with known user. Then attempts to find user with given uid.
         On success, reads user values, disconnects and attempts authenticate function with user's full dn.
@@ -299,17 +299,23 @@ class SimpleLdap(object):
             search_timeout = int(self.config['search_timeout'])
 
         # Bind to server with known account.
-        connection = self.bind_server(host, dn, password, conn_timeout)
+        connection = self.bind_server(host, dn, password, conn_timeout, get_info=get_info)
         if connection:
             # Search for user with given UID.
             search_filter = search_filter.format(uid)
-            results = self.search(search_base, search_filter, ['cn'], search_timeout)
+            if is_cae_ldap:
+                results = self.search(search_base, search_filter, ['cn'], search_timeout)
+            else:
+                results = uid
 
             if results is not None:
                 # UID found. Disconnect from known account and attempt login with found account.
                 self.unbind_server()
-                user_dn = '{0}{1}'.format('cn={0},'.format(results['cn'][0]), search_base)
-                results = self.authenticate(host, user_dn, pw)
+                if is_cae_ldap:
+                    user_dn = '{0}{1}'.format('cn={0},'.format(results['cn'][0]), search_base)
+                else:
+                    user_dn = '{0}{1}'.format('uid={0},'.format(results), search_base)
+                results = self.authenticate(host, user_dn, pw, get_info=get_info)
                 return results
             else:
                 # Failed to find user with given uid.
