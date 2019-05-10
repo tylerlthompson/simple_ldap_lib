@@ -311,15 +311,16 @@ class SimpleLdap(object):
             if is_cae_ldap:
                 results = self.search(search_base, search_filter, ['cn'], search_timeout)
             else:
-                results = uid
+                results = self.search(search_base, search_filter, attributes=['wmuUID'], timeout=search_timeout)
+            self.unbind_server()
 
             if results is not None:
                 # UID found. Disconnect from known account and attempt login with found account.
-                self.unbind_server()
+
                 if is_cae_ldap:
                     user_dn = '{0}{1}'.format('cn={0},'.format(results['cn'][0]), search_base)
                 else:
-                    user_dn = '{0}{1}'.format('uid={0},'.format(results), search_base)
+                    user_dn = '{0}{1}'.format('wmuUID={0},'.format(results['wmuUID'][0]), search_base)
                 results = self.authenticate(host, user_dn, pw, get_info=get_info)
                 return results
             else:
