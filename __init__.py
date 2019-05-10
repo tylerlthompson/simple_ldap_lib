@@ -140,9 +140,12 @@ class SimpleLdap(object):
         """
         Searches for the users in the ldap server based on a filter and return specified attributes.
         Assumes ldap connection is already made.
+
+        Note: To view all user attributes, pass the "attributes" as a string of "ALL_ATTRIBUTES".
+
         :param search_base: The base DN to search.
         :param search_filter: The LDAP filter to use when searching.
-        :param attributes: A list of attributes to return.
+        :param attributes: A list of attributes to return | "ALL_ATTRIBUTES".
         :param timeout: Number of seconds to wait before timing out the search.
         :param search_scope: The scope in which to search in.
         :return: None - Nothing found | Response - The response from the ldap server
@@ -164,6 +167,8 @@ class SimpleLdap(object):
                 search_filter = self.config['search_filter']
         if attributes is None:
             attributes = self.config['attributes']
+        elif attributes == 'ALL_ATTRIBUTES':
+            attributes = ldap3.ALL_ATTRIBUTES
         if timeout is None:
             timeout = int(self.config['search_timeout'])
 
