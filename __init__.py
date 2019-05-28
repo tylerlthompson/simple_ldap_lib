@@ -69,6 +69,17 @@ class SimpleLdap(object):
         """
         self.config['search_base'] = search_base
 
+    def set_uid_attribute(self, uid_attribute):
+        """
+        Sets the user id to identify users with.
+        Defaults to ['cn'], unless config value is set or this method is called.
+        :param uid_attribute: Uid value to identify users with.
+        """
+        if isinstance(uid_attribute, str):
+            self.config['default_uid'] = [uid_attribute]
+        else:
+            raise TypeError('uid_attribute must be a string.')
+
     def bind_server(self, host=None, dn=None, password=None, timeout=None, get_info='SCHEMA'):
         """
         Binds the class to an ldap server with specified credentials.
