@@ -76,7 +76,7 @@ class SimpleLdap(object):
         :param uid_attribute: Uid value to identify users with.
         """
         if isinstance(uid_attribute, str):
-            self.config['default_uid'] = [uid_attribute]
+            self.config['default_uid'] = uid_attribute
         else:
             raise TypeError('uid_attribute must be a string.')
 
@@ -274,7 +274,7 @@ class SimpleLdap(object):
         return [login_success, login_status]
 
     def authenticate_with_uid(self, uid, pw, host=None, dn=None, password=None, search_base=None, search_filter=None,
-                    conn_timeout=None, search_timeout=None, get_info='SCHEMA', is_cae_ldap=True):
+                    conn_timeout=None, search_timeout=None, get_info='SCHEMA'):
         """
         First logs into server with known user. Then attempts to find user with given uid.
         On success, reads user values, disconnects and attempts authenticate function with user's full dn.
@@ -313,25 +313,19 @@ class SimpleLdap(object):
             conn_timeout = int(self.config['connection_timeout'])
         if search_timeout is None:
             search_timeout = int(self.config['search_timeout'])
+        default_uid = self.config['default_uid']
 
         # Bind to server with known account.
         connection = self.bind_server(host, dn, password, conn_timeout, get_info=get_info)
         if connection:
             # Search for user with given UID.
             search_filter = search_filter.format(uid)
-            if is_cae_ldap:
-                results = self.search(search_base, search_filter, ['cn'], search_timeout)
-            else:
-                results = self.search(search_base, search_filter, attributes=['wmuUID'], timeout=search_timeout)
+            results = self.search(search_base, search_filter, attributes=[default_uid], timeout=search_timeout)
             self.unbind_server()
 
             if results is not None:
                 # UID found. Disconnect from known account and attempt login with found account.
-
-                if is_cae_ldap:
-                    user_dn = '{0}{1}'.format('cn={0},'.format(results['cn'][0]), search_base)
-                else:
-                    user_dn = '{0}{1}'.format('wmuUID={0},'.format(results['wmuUID'][0]), search_base)
+                user_dn = '{0}{1}'.format('{0}={1},'.format(default_uid, results[default_uid][0]), search_base)
                 results = self.authenticate(host, user_dn, pw, get_info=get_info)
                 return results
             else:
