@@ -146,8 +146,8 @@ class SimpleLdap(object):
         except AttributeError:
             pass
 
-
-    def search(self, search_base=None, search_filter=None, attributes=None, timeout=None, search_scope='LEVEL'):
+    def search(self, search_base=None, search_filter=None, attributes=None, timeout=None, search_scope='LEVEL',
+               paged_size=1):
         """
         Searches for the users in the ldap server based on a filter and return specified attributes.
         Assumes ldap connection is already made.
@@ -159,6 +159,7 @@ class SimpleLdap(object):
         :param attributes: A list of attributes to return | "ALL_ATTRIBUTES".
         :param timeout: Number of seconds to wait before timing out the search.
         :param search_scope: The scope in which to search in.
+        :param paged_size: Number of records to return.
         :return: None - Nothing found | Response - The response from the ldap server
         """
         logger.debug('Attempting server search.')
@@ -195,7 +196,7 @@ class SimpleLdap(object):
                 search_base=search_base,
                 search_filter=search_filter,
                 search_scope=search_scope,
-                paged_size=1,
+                paged_size=paged_size,
                 attributes=attributes,
                 time_limit=timeout,
             )
@@ -210,7 +211,14 @@ class SimpleLdap(object):
             logger.error('No ldap response found.')
             return None
 
-        return self._ldap_connection.response[0]['attributes']
+        # collect response
+        if paged_size == 1:
+            return self._ldap_connection.response[0]['attributes']
+        else:
+            response_attributes = []
+            for response_attribute in self._ldap_connection.response:
+                response_attributes.append(response_attribute['attributes'])
+            return response_attributes
 
     def authenticate(self, host=None, dn=None, password=None, timeout=None, get_info='SCHEMA'):
         """
