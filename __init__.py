@@ -46,7 +46,7 @@ class SimpleLdap(object):
         """
         if check_credentials:
             # Checking credentials. Slower but ensures master account is valid for given LDAP.
-            auth_result = self.authenticate(dn=master_dn, password=master_password, get_info=get_info)
+            auth_result = self.authenticate_with_known_uid(dn=master_dn, password=master_password, get_info=get_info)
             if auth_result[0]:
                 # Authenticated properly.
                 self.config['master_dn'] = master_dn
@@ -220,10 +220,10 @@ class SimpleLdap(object):
                 response_attributes.append(response_attribute['attributes'])
             return response_attributes
 
-    def authenticate(self, host=None, dn=None, password=None, timeout=None, get_info='SCHEMA'):
+    def authenticate_with_known_uid(self, host=None, dn=None, password=None, timeout=None, get_info='SCHEMA'):
         """
-        Authenticates a user with an ldap server.
-        Accomplishes this by binding to prove user exists, then immediately unbinding.
+        Attempts LDAP authentication with a known, valid and existing UID.
+        Accomplishes this by binding to prove user exists and credentials are valid, then immediately unbinds.
         :param host: Ldap server address.
         :param dn: Full DN of the user to log in with.
         :param password: User's password.
@@ -281,11 +281,13 @@ class SimpleLdap(object):
 
         return [login_success, login_status]
 
-    def authenticate_with_uid(self, uid, pw, host=None, dn=None, password=None, search_base=None, search_filter=None,
-                    conn_timeout=None, search_timeout=None, get_info='SCHEMA'):
+    def authenticate_with_unknown_uid(self, uid, pw, host=None, dn=None, password=None, search_base=None, search_filter=None,
+                                      conn_timeout=None, search_timeout=None, get_info='SCHEMA'):
         """
+        Attempts LDAP authentication with a UID that may or may not be valid. Ex: Such as input from a user.
+
         First logs into server with known user. Then attempts to find user with given uid.
-        On success, reads user values, disconnects and attempts authenticate function with user's full dn.
+        On success, reads user values, disconnects and attempts the authenticate_with_known_uid function.
         :param uid: User UID to search for.
         :param pw: User password to attempt login with.
         :param host: Ldap server address.
@@ -334,7 +336,7 @@ class SimpleLdap(object):
             if results is not None:
                 # UID found. Disconnect from known account and attempt login with found account.
                 user_dn = '{0}{1}'.format('{0}={1},'.format(default_uid, results[default_uid][0]), search_base)
-                results = self.authenticate(host, user_dn, pw, get_info=get_info)
+                results = self.authenticate_with_known_uid(host, user_dn, pw, get_info=get_info)
                 return results
             else:
                 # Failed to find user with given uid.

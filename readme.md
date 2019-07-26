@@ -47,9 +47,10 @@ This project needs to know the settings of the LDAP entity it connects to. This 
 
 ### SimpleLdap Functions
 
-* `authenticate` - For when you have a known valid username and want to attempt to authenticate with a provided password.
-* `authenticate_with_uid` - For when you have a username that may or may not be valid (such as user input), but you
-    want to attempt authentication with a provided password.
+* `authenticate_with_known_uid` - For when you have a known valid username and want to attempt to authenticate with a
+provided password.
+* `authenticate_with_unknown_uid` - For when you have a username that may or may not be valid (such as user input), but
+you want to attempt authentication with a provided password.
 * `search` - For when you want to acquire specific user attributes from the LDAP server.
     * If authentication is required (which should be more often than not), then use one of the above two methods first.
     Only proceed to search.
