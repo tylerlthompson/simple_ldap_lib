@@ -11,3 +11,4 @@
 
 # Do not track local environment logs.
 *.log
+*.log.*
