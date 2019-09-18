@@ -183,11 +183,6 @@ class SimpleLdap(object):
         """
         Attempts to unbind server.
         """
-        # Handle for debug mode.
-        if self.debug:
-            logger.info('Calling unbind_server().')
-
-        # Attempt server unbind.
         try:
             if self._ldap_connection.bound:
                 self._ldap_connection.unbind()
