@@ -42,6 +42,7 @@ class SimpleLdap(object):
         :param master_dn: Dn of master account.
         :param master_password: Password of master account.
         :param check_credentials: Bool if credentials should be validated. Defaults to true.
+        :param get_info: String indicating how to pull schema on connection.
         :return: Boolean indicating if config values were set.
         """
         if check_credentials:
@@ -87,6 +88,7 @@ class SimpleLdap(object):
         :param dn: Full DN of the user to log in with.
         :param password: Login user password.
         :param timeout: Number of seconds to wait before timing out the connection.
+        :param get_info: String indicating how to pull schema on connection.
         :return: True | False
         """
         logger.debug('Attempting server bind.')
@@ -228,6 +230,7 @@ class SimpleLdap(object):
         :param dn: Full DN of the user to log in with.
         :param password: User's password.
         :param timeout: Number of seconds to wait before timing out the connection.
+        :param get_info: String indicating how to pull schema on connection.
         :return: Array - [Boolean - Authentication success, String - status_message]
         """
         logger.debug('Attempting user authentication.')
@@ -281,8 +284,8 @@ class SimpleLdap(object):
 
         return [login_success, login_status]
 
-    def authenticate_with_unknown_uid(self, uid, pw, host=None, dn=None, password=None, search_base=None, search_filter=None,
-                                      conn_timeout=None, search_timeout=None, get_info='SCHEMA'):
+    def authenticate_with_unknown_uid(self, uid, pw, host=None, dn=None, password=None, search_base=None,
+                                      search_filter=None, conn_timeout=None, search_timeout=None, get_info='SCHEMA'):
         """
         Attempts LDAP authentication with a UID that may or may not be valid. Ex: Such as input from a user.
 
@@ -297,6 +300,7 @@ class SimpleLdap(object):
         :param search_filter: The LDAP filter to use when searching.
         :param conn_timeout: Number of seconds to wait before timing out the connection.
         :param search_timeout: Number of seconds to wait before timing out the search.
+        :param get_info: String indicating how to pull schema on connection.
         :return: Array - [Boolean - Authentication success, String - status_message]
         """
         logger.debug('Attempting user authentication with specified UID.')
