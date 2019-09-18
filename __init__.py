@@ -6,21 +6,26 @@ Class to extend functionality of Python's ldap3 module.
 import ldap3, re
 
 # User Class Imports.
-from .resources import logging
+from .resources import logging as init_logging
 from .resources.config import config
 
 
 # Initialize logging.
-logger = logging.get_logger(__name__)
+logger = init_logging.get_logger(__name__)
 
 
 class SimpleLdap(object):
     """
     Extends ldap3 module to have server binding and authentication methods.
     """
-    def __init__(self):
+    def __init__(self, debug=False):
         self._ldap_connection = None
         self.config = config.copy()
+        self.debug = debug
+
+        if debug:
+            logger.info('Running in debug mode. Will print out function args to console.')
+            logger.info('Note that, for security reasons, password values will not be logged/displayed.')
 
     def __del__(self):
         self.unbind_server()
@@ -30,6 +35,12 @@ class SimpleLdap(object):
         Sets config host value.
         :param host: Desired host.
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling set_host().')
+            logger.info('host: {0}')
+
+        # Set host value.
         if re.match('ldaps://', host):
             self.config['host'] = host
         else:
@@ -45,6 +56,14 @@ class SimpleLdap(object):
         :param get_info: String indicating how to pull schema on connection.
         :return: Boolean indicating if config values were set.
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling set_master_account().')
+            logger.info('master_dn: {0}'.format(master_dn))
+            logger.info('check_credentials: {0}'.format(check_credentials))
+            logger.info('get_info: {0}'.format(get_info))
+
+        # Set account values.
         if check_credentials:
             # Checking credentials. Slower but ensures master account is valid for given LDAP.
             auth_result = self.authenticate_with_known_uid(dn=master_dn, password=master_password, get_info=get_info)
@@ -68,6 +87,12 @@ class SimpleLdap(object):
         In method format so user does not have to access library config for basic functionality.
         :param search_base: The base DN to search.
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling set_search_base().')
+            logger.info('search_base: {0}'.format(search_base))
+
+        # Set search base value.
         self.config['search_base'] = search_base
 
     def set_uid_attribute(self, uid_attribute):
@@ -76,6 +101,12 @@ class SimpleLdap(object):
         Defaults to ['cn'], unless config value is set or this method is called.
         :param uid_attribute: Uid value to identify users with.
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling set_uid_attribute().')
+            logger.info('uid_attribute: {0}'.format(uid_attribute))
+
+        # Set uid value.
         if isinstance(uid_attribute, str):
             self.config['default_uid'] = uid_attribute
         else:
@@ -91,6 +122,9 @@ class SimpleLdap(object):
         :param get_info: String indicating how to pull schema on connection.
         :return: True | False
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling bind_server().')
         logger.debug('Attempting server bind.')
 
         # Define kwarg values.
@@ -103,6 +137,14 @@ class SimpleLdap(object):
         if timeout is None:
             timeout = int(self.config['connection_timeout'])
 
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('host: {0}'.format(host))
+            logger.info('dn: {0}'.format(dn))
+            logger.info('timeout: {0}'.format(timeout))
+            logger.info('get_info: {0}'.format(get_info))
+
+        # Attempt server bind.
         try:
             server = ldap3.Server(host=host, connect_timeout=timeout, get_info=get_info)
             logger.debug('Server: {0}'.format(server))
@@ -141,12 +183,17 @@ class SimpleLdap(object):
         """
         Attempts to unbind server.
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling unbind_server().')
+
+        # Attempt server unbind.
         try:
             if self._ldap_connection.bound:
                 self._ldap_connection.unbind()
                 logger.debug('Unbound connection: {0}'.format(self._ldap_connection))
-        except AttributeError:
-            pass
+        except AttributeError as err:
+            logger.info('Failed to unbind server: {0}'.format(err))
 
     def search(self, search_base=None, search_filter=None, attributes=None, timeout=None, search_scope='LEVEL',
                paged_size=1):
@@ -164,6 +211,9 @@ class SimpleLdap(object):
         :param paged_size: Number of records to return.
         :return: None - Nothing found | Response - The response from the ldap server
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling search().')
         logger.debug('Attempting server search.')
 
         # Define kwarg values.
@@ -193,6 +243,16 @@ class SimpleLdap(object):
         else:
             search_scope = ldap3.SUBTREE
 
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('search_base: {0}'.format(search_base))
+            logger.info('search_filter: {0}'.format(search_filter))
+            logger.info('attributes: {0}'.format(attributes))
+            logger.info('timeout: {0}'.format(timeout))
+            logger.info('search_scope: {0}'.format(search_scope))
+            logger.info('paged_size: {0}'.format(paged_size))
+
+        # Attempt search.
         try:
             self._ldap_connection.search(
                 search_base=search_base,
@@ -233,6 +293,9 @@ class SimpleLdap(object):
         :param get_info: String indicating how to pull schema on connection.
         :return: Array - [Boolean - Authentication success, String - status_message]
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling authenticate_With_known_id().')
         logger.debug('Attempting user authentication.')
 
         # Define kwarg values.
@@ -245,6 +308,14 @@ class SimpleLdap(object):
         if timeout is None:
             timeout = int(self.config['connection_timeout'])
 
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('host: {0}'.format(host))
+            logger.info('dn: {0}'.format(dn))
+            logger.info('timeout: {0}'.format(timeout))
+            logger.info('get_info: {0}'.format(get_info))
+
+        # Attempt authentication.
         login_status = 'Authentication success.'
         login_success = False
         try:
@@ -303,7 +374,12 @@ class SimpleLdap(object):
         :param get_info: String indicating how to pull schema on connection.
         :return: Array - [Boolean - Authentication success, String - status_message]
         """
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('Calling authenticate_with_unknown_id().')
         logger.debug('Attempting user authentication with specified UID.')
+
+        required_arg_failure = False
 
         # Define kwarg values.
         if host is None:
@@ -315,7 +391,7 @@ class SimpleLdap(object):
         if search_base is None:
             if self.config['search_base'] is '':
                 logger.error('No search base set. Cancelling search.')
-                return None
+                required_arg_failure = True
             else:
                 search_base = self.config['search_base']
         if search_filter is None:
@@ -328,6 +404,21 @@ class SimpleLdap(object):
         if search_timeout is None:
             search_timeout = int(self.config['search_timeout'])
         default_uid = self.config['default_uid']
+
+        # Handle for debug mode.
+        if self.debug:
+            logger.info('uid: {0}'.format(uid))
+            logger.info('host: {0}'.format(host))
+            logger.info('dn: {0}'.format(dn))
+            logger.info('search_base: {0}'.format(search_base))
+            logger.info('search_filter: {0}'.format(search_filter))
+            logger.info('conn_timeout: {0}'.format(conn_timeout))
+            logger.info('search_timeout: {0}'.format(search_timeout))
+            logger.info('get_info: {0}'.format(get_info))
+
+        # Check if any required arg checks failed. If so, cancel search by exiting.
+        if required_arg_failure:
+            return None
 
         # Bind to server with known account.
         connection = self.bind_server(host, dn, password, conn_timeout, get_info=get_info)
