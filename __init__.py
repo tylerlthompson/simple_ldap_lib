@@ -184,7 +184,7 @@ class SimpleLdap(object):
         Attempts to unbind server.
         """
         try:
-            if self._ldap_connection.bound:
+            if self._ldap_connection is not None and self._ldap_connection.bound:
                 self._ldap_connection.unbind()
                 logger.debug('Unbound connection: {0}'.format(self._ldap_connection))
         except AttributeError as err:
