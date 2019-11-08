@@ -2,6 +2,7 @@
 config = {
     'host': 'ldaps://',
     'master_dn': '',
+    'master_cn': '',
     'master_password': '',
     'search_base': '',
     'search_filter': '',
