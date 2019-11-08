@@ -6,12 +6,24 @@ Class to extend functionality of Python's ldap3 module.
 import ldap3, re
 
 # User Class Imports.
-from .resources import logging as init_logging
 from .resources.config import config
 
 
 # Initialize logging.
-logger = init_logging.get_logger(__name__)
+# Since this is a library, we specifically only modify logging if the library is being run alone.
+try:
+    # First, try to import the variable specific to our library logging.
+    from SimpleLdapLib.resources.logging import simple_ldap_lib_logger
+
+    # It worked, so we know the project is being run stand alone, probably as a unittest.
+    # Proceed to configure logging.
+    from SimpleLdapLib.resources.logging import get_logger as init_logging
+    logger = init_logging(__name__)
+except ModuleNotFoundError:
+    # Above import failed. Project is being run as a library.
+    # Just import existing logger and do not modify.
+    import logging as init_logging
+    logger = init_logging.getLogger('simple_ldap_lib')
 
 
 class SimpleLdap(object):
