@@ -31,10 +31,11 @@ def _initialize_logger_settings(debug=False):
     Creates log directories (if not found) and initializes logging settings.
     :param debug: Boolean to indicate if test log messages should also be displayed after initialization.
     """
-    # Find project_dir logging path.
+    # Determine logging path.
     project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    print('Project_dir: {0}'.format(project_dir))
     log_dir = os.path.join(project_dir, 'resources/logs')
+
+    # Check if logging path exists.
     if not os.path.exists(log_dir):
         print('Creating logging folders at "{0}".'.format(log_dir))
         os.makedirs(log_dir)

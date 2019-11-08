@@ -303,7 +303,7 @@ class SimpleLdap(object):
         # Handle for debug mode.
         if self.debug:
             logger.info('Calling authenticate_With_known_id().')
-        logger.debug('Attempting user authentication.')
+        logger.debug('Attempting user authentication with known UID.')
 
         # Define kwarg values.
         if host is None:
@@ -384,7 +384,7 @@ class SimpleLdap(object):
         # Handle for debug mode.
         if self.debug:
             logger.info('Calling authenticate_with_unknown_id().')
-        logger.debug('Attempting user authentication with specified UID.')
+        logger.debug('Attempting user authentication with unknown UID.')
 
         required_arg_failure = False
 
